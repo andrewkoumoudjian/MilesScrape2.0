@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Leads - LeadBot</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">LeadBot</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/saved-leads">Saved Leads</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1 class="mb-4">Saved Leads</h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="row">
+            <div class="col-md-3 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Filters</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="filterForm">
+                            <div class="mb-3">
+                                <label for="minScore" class="form-label">Minimum Score</label>
+                                <input type="range" class="form-range" id="minScore" name="minScore" min="0" max="100" value="50">
+                                <div class="d-flex justify-content-between">
+                                    <span>0</span>
+                                    <span id="minScoreValue">50</span>
+                                    <span>100</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Source</label>
+                                <div class="form-check">
+                                    <input class="form-check-input filter-checkbox" type="checkbox" id="sourceTwitter" name="source" value="twitter" checked>
+                                    <label class="form-check-label" for="sourceTwitter">Twitter</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input filter-checkbox" type="checkbox" id="sourceLinkedIn" name="source" value="linkedin" checked>
+                                    <label class="form-check-label" for="sourceLinkedIn">LinkedIn</label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Milestone Type</label>
+                                <div id="milestoneFilters">
+                                    {% for milestone in all_milestones %}
+                                    <div class="form-check">
+                                        <input class="form-check-input filter-checkbox" type="checkbox" id="milestone{{ loop.index }}" name="milestone" value="{{ milestone }}" checked>
+                                        <label class="form-check-label" for="milestone{{ loop.index }}">{{ milestone }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Seniority Level</label>
+                                <div class="form-check">
+                                    <input class="form-check-input filter-checkbox" type="checkbox" id="seniorityExecutive" name="seniority" value="executive" checked>
+                                    <label class="form-check-label" for="seniorityExecutive">Executive</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input filter-checkbox" type="checkbox" id="senioritySenior" name="seniority" value="senior" checked>
+                                    <label class="form-check-label" for="senioritySenior">Senior</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input filter-checkbox" type="checkbox" id="seniorityMid" name="seniority" value="mid" checked>
+                                    <label class="form-check-label" for="seniorityMid">Mid-Level</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input filter-checkbox" type="checkbox" id="seniorityEntry" name="seniority" value="entry" checked>
+                                    <label class="form-check-label" for="seniorityEntry">Entry-Level</label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Export</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="/export-leads" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success">Export to CSV</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-9">
+                <div id="leadsList">
+                    {% if leads %}
+                        {% for lead in leads %}
+                            <div class="card mb-3 lead-card" 
+                                 data-score="{{ lead.relevance_score }}" 
+                                 data-source="{{ lead.source }}" 
+                                 data-milestone="{{ lead.milestone_type }}" 
+                                 data-seniority="{{ lead.seniority_level }}">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h5 class="card-title mb-0">{{ lead.company or "Unknown Company" }}</h5>
+                                            <p class="text-muted small mb-2">{{ lead.industry or "Unknown Industry" }}</p>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="score-badge mb-2" style="background-color: {{ get_score_color(lead.relevance_score) }}">
+                                                {{ lead.relevance_score }}
+                                            </div>
+                                            <span class="badge bg-info">{{ lead.source }}</span>
+                                            <span class="badge bg-secondary">{{ lead.milestone_type }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr class="my-2">
+                                    
+                                    <div class="row mt-2">
+                                        <div class="col-md-6">
+                                            {% if lead.person %}
+                                            <p class="mb-1"><strong>Contact:</strong> {{ lead.person }}</p>
+                                            {% endif %}
+                                            {% if lead.job_title %}
+                                            <p class="mb-1"><strong>Title:</strong> {{ lead.job_title }}</p>
+                                            {% endif %}
+                                            {% if lead.location %}
+                                            <p class="mb-1"><strong>Location:</strong> {{ lead.location }}</p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Company Size:</strong> {{ lead.company_size_range }}</p>
+                                            <p class="mb-1"><strong>Seniority:</strong> {{ lead.seniority_level }}</p>
+                                            <p class="mb-1"><strong>Date:</strong> {{ lead.created_at }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3 quote-box">
+                                        <p class="quote-text mb-2">{{ lead.text|truncate(200) }}</p>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <a href="{{ lead.source_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View Source</a>
+                                        <form action="/lead/{{ lead.id }}/delete" method="post" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to remove this lead?')">Remove</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            You haven't saved any leads yet. Search for leads and save them to see them here.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer mt-5 py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">LeadBot &copy; 2025. All rights reserved.</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Filter functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const minScoreSlider = document.getElementById('minScore');
+            const minScoreValue = document.getElementById('minScoreValue');
+            const filterInputs = document.querySelectorAll('.filter-checkbox, #minScore');
+            const leadCards = document.querySelectorAll('.lead-card');
+            
+            // Update score value display
+            minScoreSlider.addEventListener('input', function() {
+                minScoreValue.textContent = this.value;
+                applyFilters();
+            });
+            
+            // Apply filters when any input changes
+            filterInputs.forEach(input => {
+                input.addEventListener('change', applyFilters);
+            });
+            
+            function applyFilters() {
+                const minScore = parseInt(minScoreSlider.value);
+                const selectedSources = getCheckedValues('source');
+                const selectedMilestones = getCheckedValues('milestone');
+                const selectedSeniority = getCheckedValues('seniority');
+                
+                leadCards.forEach(card => {
+                    const score = parseInt(card.dataset.score);
+                    const source = card.dataset.source;
+                    const milestone = card.dataset.milestone;
+                    const seniority = card.dataset.seniority;
+                    
+                    const matchesScore = score >= minScore;
+                    const matchesSource = selectedSources.length === 0 || selectedSources.includes(source);
+                    const matchesMilestone = selectedMilestones.length === 0 || selectedMilestones.includes(milestone);
+                    const matchesSeniority = selectedSeniority.length === 0 || selectedSeniority.includes(seniority);
+                    
+                    if (matchesScore && matchesSource && matchesMilestone && matchesSeniority) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                // Show message if no leads match filters
+                const visibleLeads = document.querySelectorAll('.lead-card[style="display: block;"]');
+                const noResultsMsg = document.getElementById('noResultsMsg');
+                
+                if (visibleLeads.length === 0 && leadCards.length > 0) {
+                    if (!noResultsMsg) {
+                        const msg = document.createElement('div');
+                        msg.id = 'noResultsMsg';
+                        msg.className = 'alert alert-info';
+                        msg.textContent = 'No leads match your current filters.';
+                        document.getElementById('leadsList').appendChild(msg);
+                    }
+                } else if (noResultsMsg) {
+                    noResultsMsg.remove();
+                }
+            }
+            
+            function getCheckedValues(name) {
+                return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`))
+                    .map(checkbox => checkbox.value);
+            }
+            
+            // Initial filter application
+            applyFilters();
+        });
+    </script>
+</body>
+</html>

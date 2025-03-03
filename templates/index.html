@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadBot - AI-Powered Lead Generation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">LeadBot</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/saved-leads">Saved Leads</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Logout</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/register">Register</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h1 class="card-title text-center mb-4">Find Your Next Leads</h1>
+                        <form id="searchForm" method="post" action="/search">
+                            {{ form.csrf_token }}
+                            
+                            <div class="mb-3">
+                                <label for="prompt" class="form-label">What kind of leads are you looking for?</label>
+                                <textarea class="form-control" id="prompt" name="prompt" rows="3" required
+                                placeholder="Example: Companies that recently raised Series A funding in the AI space"></textarea>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="locations" class="form-label">Locations (comma-separated)</label>
+                                    <input type="text" class="form-control" id="locations" name="locations" 
+                                    value="San Francisco, New York">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="max_age_days" class="form-label">How recent? (days)</label>
+                                    <input type="number" class="form-control" id="max_age_days" name="max_age_days" value="30">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Seniority Level</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="seniority_levels" value="executive" checked id="executive">
+                                        <label class="form-check-label" for="executive">Executive</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="seniority_levels" value="senior" checked id="senior">
+                                        <label class="form-check-label" for="senior">Senior</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="seniority_levels" value="mid" id="mid">
+                                        <label class="form-check-label" for="mid">Mid-Level</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Company Size</label>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label for="min_size" class="form-label">Min</label>
+                                            <input type="number" class="form-control" id="min_size" name="min_size" value="50">
+                                        </div>
+                                        <div class="col-6">
+                                            <label for="max_size" class="form-label">Max</label>
+                                            <input type="number" class="form-control" id="max_size" name="max_size" value="500">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">Find Leads</button>
+                            </div>
+                            
+                            {% if current_user.is_authenticated %}
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="checkbox" name="save_search" id="save_search">
+                                <label class="form-check-label" for="save_search">
+                                    Save this search for daily updates
+                                </label>
+                            </div>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer mt-5 py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">LeadBot &copy; 2025. All rights reserved.</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

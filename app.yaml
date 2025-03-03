@@ -1,0 +1,14 @@
+runtime: python39
+
+env_variables:
+  FLASK_ENV: "production"
+  SCHEDULER_ENABLED: "True"
+
+instance_class: F2
+
+handlers:
+- url: /static
+  static_dir: static
+  
+- url: /.*
+  script: auto
