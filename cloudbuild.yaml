@@ -16,16 +16,30 @@ steps:
     - 'deploy'
     - 'milestone-lead-generator'
     - '--image=gcr.io/$PROJECT_ID/milescrape:$COMMIT_SHA'
-    - '--region=us-central1'
+    - '--region=northamerica-northeast1'
     - '--platform=managed'
     - '--allow-unauthenticated'
     - '--port=8080'
     - '--cpu=1'
     - '--memory=512Mi'
     - '--timeout=300s'
-    - '--min-instances=0'
+    - '--min-instances=1'
     - '--max-instances=10'
     - '--set-env-vars=PORT=8080'
+    - '--no-traffic'
+    - '--tag=latest'
+
+  # Migrate traffic to new revision if deployment succeeds
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+    - 'run'
+    - 'services'
+    - 'update-traffic'
+    - 'milestone-lead-generator'
+    - '--region=northamerica-northeast1'
+    - '--platform=managed'
+    - '--to-latest'
 
 images:
   - 'gcr.io/$PROJECT_ID/milescrape:$COMMIT_SHA'
