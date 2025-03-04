@@ -55,14 +55,12 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install ChromeDriver directly with a fixed version instead of detecting
-# This is much more reliable for CI/CD environments
+# Install ChromeDriver directly with a fixed version
 RUN CHROMEDRIVER_VERSION="123.0.6312.58" \
     && wget -q -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip" \
     && unzip /tmp/chromedriver.zip -d /usr/local/bin/ \
     && rm /tmp/chromedriver.zip \
-    && chmod +x /usr/local/bin/chromedriver \
-    && chromedriver --version
+    && chmod +x /usr/local/bin/chromedriver
 
 # Copy application code
 COPY . .
@@ -74,7 +72,6 @@ RUN mkdir -p output
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV FLASK_APP=app.py
-# Tell Selenium where to find chromedriver
 ENV PATH="/usr/local/bin:${PATH}"
 
 # Expose port
