@@ -55,12 +55,12 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install ChromeDriver directly with a fixed version
-RUN CHROMEDRIVER_VERSION="123.0.6312.58" \
-    && wget -q -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip" \
+RUN CHROMEDRIVER_VERSION="133.0.6943.141" \
+    && wget -q -O /tmp/chromedriver.zip "https://storage.googleapis.com/chrome-for-testing-public/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip" \
     && unzip /tmp/chromedriver.zip -d /usr/local/bin/ \
     && rm /tmp/chromedriver.zip \
     && chmod +x /usr/local/bin/chromedriver
+
 
 # Copy application code
 COPY . .
