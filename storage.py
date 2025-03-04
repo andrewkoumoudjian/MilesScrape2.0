@@ -1,198 +1,135 @@
-"""Storage module for the Milestone Lead Generator."""
+"""
+Google Cloud Storage integration for MilesScrape 2.0
+"""
 
-import json
 import os
+import json
 import logging
-from datetime import datetime
-from typing import Dict, Any, List
+import tempfile
+from typing import List, Dict, Any
+from google.cloud import storage
+from google.oauth2 import service_account
 
-from config import (
-    DATA_DIRECTORY,
-    LEADS_FILE,
-    ALL_POSTS_FILE
-)
-
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-class DataStorage:
-    """Handles storage and retrieval of scanned posts and leads."""
+# Get credentials from environment variable or file
+def get_storage_client():
+    """Get authenticated Google Cloud Storage client"""
+    try:
+        # Try to get credentials from environment variable
+        if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
+            return storage.Client()
+        
+        # Otherwise look for credentials file
+        credentials_path = os.path.join(os.path.dirname(__file__), 'credentials.json')
+        if os.path.exists(credentials_path):
+            credentials = service_account.Credentials.from_service_account_file(credentials_path)
+            return storage.Client(credentials=credentials)
+        
+        # If both methods fail, try default authentication
+        return storage.Client()
     
-    def __init__(self):
-        """Initialize data storage."""
-        # Ensure data directory exists
-        if not os.path.exists(DATA_DIRECTORY):
-            os.makedirs(DATA_DIRECTORY)
+    except Exception as e:
+        logger.error(f"Error getting storage client: {str(e)}")
+        raise
+
+def get_bucket_name():
+    """Get the bucket name from environment variable or config"""
+    # Default bucket name
+    default_bucket = "milescrape-data"
     
-    def save_all_posts(self, posts: List[Dict[str, Any]]) -> None:
-        """Save all scanned posts to file."""
-        try:
-            # Generate timestamped filename
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = os.path.join(DATA_DIRECTORY, f"posts_{timestamp}.json")
-            
-            # Save to JSON file
-            with open(filename, 'w', encoding='utf-8') as f:
-                json.dump(posts, f, indent=2, ensure_ascii=False)
-            
-            logger.info(f"Saved {len(posts)} posts to {filename}")
-            
-            # Also update the main all posts file
-            self._update_main_file(posts, ALL_POSTS_FILE)
-            
-        except Exception as e:
-            logger.error(f"Error saving posts: {str(e)}")
+    # Try to get from environment variable
+    return os.environ.get("GOOGLE_CLOUD_BUCKET", default_bucket)
+
+def save_to_cloud_storage(data: List[Dict[str, Any]], filename: str) -> str:
+    """
+    Save data to Google Cloud Storage
     
-    def save_high_value_leads(self, leads: List[Dict[str, Any]]) -> None:
-        """Save high value leads to file."""
-        try:
-            # Generate timestamped filename
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = os.path.join(DATA_DIRECTORY, f"leads_{timestamp}.json")
-            
-            # Save to JSON file
-            with open(filename, 'w', encoding='utf-8') as f:
-                json.dump(leads, f, indent=2, ensure_ascii=False)
-            
-            logger.info(f"Saved {len(leads)} high-value leads to {filename}")
-            
-            # Also update the main leads file
-            self._update_main_file(leads, LEADS_FILE)
-            
-        except Exception as e:
-            logger.error(f"Error saving leads: {str(e)}")
+    Args:
+        data: List of dictionaries with processed data
+        filename: Name for the file in cloud storage
+        
+    Returns:
+        Cloud storage URL of the saved file
+    """
+    try:
+        client = get_storage_client()
+        bucket_name = get_bucket_name()
+        bucket = client.bucket(bucket_name)
+        
+        # Create a temporary local file
+        with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False) as temp_file:
+            json.dump(data, temp_file, indent=2)
+            temp_file_path = temp_file.name
+        
+        # Upload to Google Cloud Storage
+        blob = bucket.blob(filename)
+        blob.upload_from_filename(temp_file_path)
+        
+        # Clean up the temporary file
+        os.unlink(temp_file_path)
+        
+        logger.info(f"Data saved to gs://{bucket_name}/{filename}")
+        return f"gs://{bucket_name}/{filename}"
     
-    def _update_main_file(self, new_items: List[Dict[str, Any]], filename: str) -> None:
-        """Update main file with new items, avoiding duplicates."""
-        file_path = os.path.join(DATA_DIRECTORY, filename)
-        
-        try:
-            # Load existing items if file exists
-            existing_items = []
-            if os.path.exists(file_path):
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    existing_items = json.load(f)
-            
-            # Create ID set for quick duplicate checking
-            existing_ids = {item.get('id', '') for item in existing_items}
-            
-            # Add only new items
-            updated_items = existing_items.copy()
-            added_count = 0
-            
-            for item in new_items:
-                item_id = item.get('id', '')
-                if item_id and item_id not in existing_ids:
-                    updated_items.append(item)
-                    existing_ids.add(item_id)
-                    added_count += 1
-            
-            # Write updated list back to file
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(updated_items, f, indent=2, ensure_ascii=False)
-            
-            logger.info(f"Added {added_count} new items to {filename}")
-            
-        except Exception as e:
-            logger.error(f"Error updating {filename}: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error saving to cloud storage: {str(e)}")
+        raise
+
+def list_bucket_files() -> List[Dict[str, Any]]:
+    """
+    List files in the Google Cloud Storage bucket
     
-    def load_recent_posts(self, limit: int = 100) -> List[Dict[str, Any]]:
-        """Load most recent posts from storage."""
-        file_path = os.path.join(DATA_DIRECTORY, ALL_POSTS_FILE)
+    Returns:
+        List of file information dictionaries
+    """
+    try:
+        client = get_storage_client()
+        bucket_name = get_bucket_name()
+        bucket = client.bucket(bucket_name)
         
-        if not os.path.exists(file_path):
-            return []
+        files = []
+        for blob in bucket.list_blobs():
+            files.append({
+                "name": blob.name,
+                "size": blob.size,
+                "updated": blob.updated.isoformat() if blob.updated else None,
+                "content_type": blob.content_type
+            })
         
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                posts = json.load(f)
-            
-            # Sort by timestamp descending (most recent first)
-            posts.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
-            
-            # Return limited number
-            return posts[:limit]
-            
-        except Exception as e:
-            logger.error(f"Error loading posts: {str(e)}")
-            return []
+        return files
     
-    def load_high_value_leads(self, limit: int = 100) -> List[Dict[str, Any]]:
-        """Load high value leads from storage."""
-        file_path = os.path.join(DATA_DIRECTORY, LEADS_FILE)
-        
-        if not os.path.exists(file_path):
-            return []
-        
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                leads = json.load(f)
-            
-            # Sort by sentiment score and relevance score descending
-            leads.sort(key=lambda x: (
-                x.get('sentiment', 0) + 
-                x.get('milestone_details', {}).get('relevance_score', 0) / 10
-            ), reverse=True)
-            
-            # Return limited number
-            return leads[:limit]
-            
-        except Exception as e:
-            logger.error(f"Error loading leads: {str(e)}")
-            return []
+    except Exception as e:
+        logger.error(f"Error listing bucket files: {str(e)}")
+        raise
+
+def download_from_cloud_storage(filename: str) -> str:
+    """
+    Download a file from Google Cloud Storage
     
-    def export_leads_csv(self) -> str:
-        """Export leads to CSV format."""
-        import csv
+    Args:
+        filename: Name of the file to download
         
-        file_path = os.path.join(DATA_DIRECTORY, LEADS_FILE)
-        csv_path = os.path.join(DATA_DIRECTORY, "high_value_leads.csv")
+    Returns:
+        Local path to the downloaded file
+    """
+    try:
+        client = get_storage_client()
+        bucket_name = get_bucket_name()
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(filename)
         
-        if not os.path.exists(file_path):
-            return "No leads data available"
+        # Create a temporary directory to store the file
+        temp_dir = tempfile.gettempdir()
+        local_path = os.path.join(temp_dir, filename)
         
-        try:
-            # Load leads
-            with open(file_path, 'r', encoding='utf-8') as f:
-                leads = json.load(f)
-            
-            # Define CSV fields
-            fields = [
-                'company_name', 
-                'milestone_type', 
-                'milestone_description',
-                'sentiment', 
-                'url', 
-                'timestamp',
-                'text'
-            ]
-            
-            # Write CSV file
-            with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=fields)
-                writer.writeheader()
-                
-                for lead in leads:
-                    # Convert timestamp to readable date
-                    timestamp = lead.get('timestamp', 0)
-                    if timestamp:
-                        date_str = datetime.fromtimestamp(timestamp/1000).strftime('%Y-%m-%d')
-                    else:
-                        date_str = "unknown"
-                    
-                    # Extract relevant fields
-                    row = {
-                        'company_name': lead.get('company_name', 'Unknown'),
-                        'milestone_type': lead.get('milestone_details', {}).get('milestone_type', 'unknown'),
-                        'milestone_description': lead.get('milestone_details', {}).get('milestone_description', ''),
-                        'sentiment': lead.get('sentiment', 0),
-                        'url': lead.get('url', ''),
-                        'timestamp': date_str,
-                        'text': lead.get('text', '')[:100] + '...'  # Truncate long text
-                    }
-                    writer.writerow(row)
-            
-            return csv_path
-            
-        except Exception as e:
-            logger.error(f"Error exporting leads to CSV: {str(e)}")
-            return f"Error: {str(e)}"
+        blob.download_to_filename(local_path)
+        logger.info(f"Downloaded {filename} to {local_path}")
+        
+        return local_path
+    
+    except Exception as e:
+        logger.error(f"Error downloading from cloud storage: {str(e)}")
+        raise
