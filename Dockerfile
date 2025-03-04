@@ -1,11 +1,17 @@
 FROM python:3.9-slim
 
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
 # Install Chrome dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     unzip \
     curl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Chrome
@@ -17,6 +23,9 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 # Set up working directory
 WORKDIR /app
 
+# Upgrade pip first
+RUN pip install --upgrade pip
+
 # Copy requirements and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -26,10 +35,6 @@ COPY . .
 
 # Create data directory
 RUN mkdir -p data
-
-# Create a non-root user
-RUN useradd -m appuser
-USER appuser
 
 # Expose port for Cloud Run
 EXPOSE 8080
