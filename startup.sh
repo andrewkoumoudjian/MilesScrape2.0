@@ -1,17 +1,9 @@
 #!/bin/bash
-# Startup script for running the Milestone Lead Generator
+# Simple startup script to ensure proper logging and error handling
+set -e
 
-# Check if virtual environment exists, create if not
-if [ ! -d "venv" ]; then
-    echo "Creating virtual environment..."
-    python -m venv venv
-fi
+echo "Starting MilesScrape 2.0 application..."
+echo "Environment: PORT=$PORT"
 
-# Activate virtual environment
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the application
-python main.py --mode schedule
+# Start Gunicorn
+exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 app:app
