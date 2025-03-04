@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milestone Lead Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-rocket logo-icon"></i>
+            <h3>MilesScrap</h3>
+        </div>
+        <div class="sidebar-menu">
+            <a href="#" class="active" id="dashboard-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="#" id="leads-link"><i class="fas fa-users"></i> Leads</a>
+            <a href="#" id="scan-link"><i class="fas fa-search"></i> New Scan</a>
+            <a href="#" id="analytics-link"><i class="fas fa-chart-bar"></i> Analytics</a>
+            <a href="#" id="settings-link"><i class="fas fa-cog"></i> Settings</a>
+        </div>
+        <div class="sidebar-footer">
+            <span>© 2025 MilesScrap</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="topbar">
+            <div class="toggle-sidebar">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search...">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="user-info">
+                <div class="notifications">
+                    <i class="far fa-bell"></i>
+                    <span class="badge">3</span>
+                </div>
+                <div class="user">
+                    <img src="static/img/user-avatar.png" alt="User Avatar">
+                    <span>Andrew K.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div class="content-section active" id="dashboard-section">
+            <h2 class="section-title">Dashboard</h2>
+            
+            <div class="overview-cards">
+                <div class="card">
+                    <div class="card-icon blue">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3>Total Leads</h3>
+                        <h2 id="total-leads">--</h2>
+                    </div>
+                    <div class="card-stats">
+                        <span class="positive"><i class="fas fa-arrow-up"></i> 12%</span> since last week
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon purple">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3>Scans Run</h3>
+                        <h2 id="scans-run">--</h2>
+                    </div>
+                    <div class="card-stats">
+                        <span class="positive"><i class="fas fa-arrow-up"></i> 5%</span> since last week
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon green">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3>Conversion Rate</h3>
+                        <h2 id="conversion-rate">--</h2>
+                    </div>
+                    <div class="card-stats">
+                        <span class="positive"><i class="fas fa-arrow-up"></i> 3%</span> since last week
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon orange">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3>Locations</h3>
+                        <h2 id="locations-count">--</h2>
+                    </div>
+                    <div class="card-stats">
+                        <span class="neutral"><i class="fas fa-equals"></i> 0%</span> since last week
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="dashboard-widget">
+                        <div class="widget-header">
+                            <h3>Recent Leads</h3>
+                            <div class="widget-actions">
+                                <button id="refresh-recent-leads" class="btn-icon"><i class="fas fa-sync-alt"></i></button>
+                                <button class="btn-view-all">View All</button>
+                            </div>
+                        </div>
+                        <div class="recent-leads-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Company</th>
+                                        <th>Milestone</th>
+                                        <th>Score</th>
+                                        <th>Location</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-leads-tbody">
+                                    <tr class="loading-row">
+                                        <td colspan="5">
+                                            <div class="loading-spinner">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <div class="loading-text">Loading recent leads...</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="dashboard-widget">
+                        <div class="widget-header">
+                            <h3>Recent Scans</h3>
+                            <div class="widget-actions">
+                                <button class="btn-view-all">View All</button>
+                            </div>
+                        </div>
+                        <div class="recent-scans-list" id="recent-scans-list">
+                            <div class="loading-spinner">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <div class="loading-text">Loading recent scans...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leads Section -->
+        <div class="content-section" id="leads-section">
+            <h2 class="section-title">All Leads</h2>
+            
+            <div class="leads-filters">
+                <div class="filter-group">
+                    <label for="location-filter">Location:</label>
+                    <select id="location-filter" class="form-select">
+                        <option value="all">All Locations</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="milestone-filter">Milestone Type:</label>
+                    <select id="milestone-filter" class="form-select">
+                        <option value="all">All Milestones</option>
+                        <option value="funding">Funding</option>
+                        <option value="expansion">Expansion</option>
+                        <option value="anniversary">Anniversary</option>
+                        <option value="award">Award</option>
+                        <option value="launch">Launch</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="sentiment-filter">Min. Sentiment:</label>
+                    <input type="range" id="sentiment-filter" min="0" max="1" step="0.1" value="0.7" class="form-range">
+                    <span id="sentiment-value">0.7</span>
+                </div>
+                
+                <button id="apply-filters" class="btn btn-primary">Apply Filters</button>
+            </div>
+            
+            <div class="leads-table-container">
+                <table class="leads-table">
+                    <thead>
+                        <tr>
+                            <th>Company <i class="fas fa-sort"></i></th>
+                            <th>Milestone <i class="fas fa-sort"></i></th>
+                            <th>Sentiment <i class="fas fa-sort"></i></th>
+                            <th>Location <i class="fas fa-sort"></i></th>
+                            <th>Date <i class="fas fa-sort"></i></th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leads-tbody">
+                        <tr class="loading-row">
+                            <td colspan="6">
+                                <div class="loading-spinner">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <div class="loading-text">Loading leads data...</div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="pagination">
+                    <button class="btn-prev"><i class="fas fa-chevron-left"></i> Previous</button>
+                    <div class="page-numbers">
+                        <button class="active">1</button>
+                        <button>2</button>
+                        <button>3</button>
+                        <button>...</button>
+                        <button>10</button>
+                    </div>
+                    <button class="btn-next">Next <i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scan Section -->
+        <div class="content-section" id="scan-section">
+            <h2 class="section-title">New Scan</h2>
+            
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="scan-form-container">
+                        <form id="scan-form">
+                            <div class="form-group">
+                                <label for="scan-location">Location:</label>
+                                <input type="text" id="scan-location" class="form-control" placeholder="e.g., New York, NY" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="scan-radius">Radius (km):</label>
+                                <input type="number" id="scan-radius" class="form-control" value="50" min="1" max="500">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="scan-days">Days Back:</label>
+                                <input type="number" id="scan-days" class="form-control" value="30" min="1" max="365">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="scan-milestone-types">Milestone Types:</label>
+                                <div class="milestone-checkboxes">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="milestone-funding" class="form-check-input" checked>
+                                        <label for="milestone-funding" class="form-check-label">Funding</label>
+                                    </div>
+                                    
+                                    <div class="form-check">
+                                        <input type="checkbox" id="milestone-expansion" class="form-check-input" checked>
+                                        <label for="milestone-expansion" class="form-check-label">Expansion</label>
+                                    </div>
+                                    
+                                    <div class="form-check">
+                                        <input type="checkbox" id="milestone-anniversary" class="form-check-input" checked>
+                                        <label for="milestone-anniversary" class="form-check-label">Anniversary</label>
+                                    </div>
+                                    
+                                    <div class="form-check">
+                                        <input type="checkbox" id="milestone-award" class="form-check-input" checked>
+                                        <label for="milestone-award" class="form-check-label">Award/Achievement</label>
+                                    </div>
+                                    
+                                    <div class="form-check">
+                                        <input type="checkbox" id="milestone-launch" class="form-check-input" checked>
+                                        <label for="milestone-launch" class="form-check-label">Product Launch</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" id="start-scan-btn" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-search"></i> Start Scan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="scan-status-container" id="scan-status-container">
+                        <div class="no-scan-placeholder">
+                            <i class="fas fa-search"></i>
+                            <h3>No Scan in Progress</h3>
+                            <p>Fill out the form and start a new scan to see live progress.</p>
+                        </div>
+                        
+                        <div class="scan-progress hidden">
+                            <div class="scan-header">
+                                <h3>Scan in Progress</h3>
+                                <span class="scan-id">ID: <span id="current-scan-id">SCAN-12345</span></span>
+                            </div>
+                            
+                            <div class="progress-bar-container">
+                                <div class="progress">
+                                    <div class="progress-bar" id="scan-progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <div class="progress-text">
+                                    <span id="scan-progress-text">0%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="scan-stats">
+                                <div class="stat">
+                                    <span class="stat-label">Location:</span>
+                                    <span class="stat-value" id="stat-location">New York, NY</span>
+                                </div>
+                                
+                                <div class="stat">
+                                    <span class="stat-label">Companies Found:</span>
+                                    <span class="stat-value" id="stat-companies">0</span>
+                                </div>
+                                
+                                <div class="stat">
+                                    <span class="stat-label">Posts Processed:</span>
+                                    <span class="stat-value" id="stat-posts">0</span>
+                                </div>
+                                
+                                <div class="stat">
+                                    <span class="stat-label">Leads Found:</span>
+                                    <span class="stat-value" id="stat-leads">0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="scan-log">
+                                <h4>Scan Log</h4>
+                                <div class="log-container" id="scan-log-container">
+                                    <div class="log-entry">
+                                        <span class="log-time">12:05:23</span>
+                                        <span class="log-message">Starting scan for "New York, NY"</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button class="btn btn-danger btn-sm" id="cancel-scan-btn">
+                                <i class="fas fa-stop"></i> Cancel Scan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lead Detail Modal -->
+    <div class="modal fade" id="leadDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="lead-detail-title">Company Name</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="lead-detail-content">
+                        <div class="lead-meta">
+                            <div class="lead-score">
+                                <span class="score-label">Lead Score</span>
+                                <span class="score-value" id="lead-detail-score">9.2</span>
+                            </div>
+                            
+                            <div class="lead-info">
+                                <div class="info-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span id="lead-detail-location">New York, NY</span>
+                                </div>
+                                
+                                <div class="info-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span id="lead-detail-date">March 2, 2025</span>
+                                </div>
+                                
+                                <div class="info-item">
+                                    <i class="fas fa-tag"></i>
+                                    <span id="lead-detail-milestone">Funding Round</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="lead-post">
+                            <h5>Original Post</h5>
+                            <div class="post-content" id="lead-detail-post">
+                                <!-- Post content will go here -->
+                            </div>
+                        </div>
+                        
+                        <div class="lead-analysis">
+                            <h5>Milestone Analysis</h5>
+                            <div class="analysis-content" id="lead-detail-analysis">
+                                <!-- Analysis content will go here -->
+                            </div>
+                        </div>
+                        
+                        <div class="lead-contact">
+                            <h5>Contact Information</h5>
+                            <div class="contact-details" id="lead-detail-contact">
+                                <!-- Contact details will go here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="lead-detail-action">Export Lead</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script src="static/js/app.js"></script>
+</body>
+</html>

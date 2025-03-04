@@ -1,0 +1,28 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/milestone-lead-generator', '.']
+    id: 'build-image'
+    timeout: '1200s'
+
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/milestone-lead-generator']
+    id: 'push-image'
+    timeout: '600s'
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'milestone-lead-generator'
+      - '--image=gcr.io/$PROJECT_ID/milestone-lead-generator'
+      - '--region=northamerica-northeast1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+    id: 'deploy-to-cloud-run'
+    timeout: '600s'
+
+timeout: '2400s'
