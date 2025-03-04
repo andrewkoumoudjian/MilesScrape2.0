@@ -9,7 +9,7 @@ webdriver-manager>=3.8.0,<4.0.0
 
 # Google Cloud dependencies - use more flexible versioning
 google-cloud-storage
-google-cloud-secretmanager
+google-cloud-secret-manager
 google-cloud-firestore
 google-cloud-bigquery
 firebase-admin
