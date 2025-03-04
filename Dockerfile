@@ -66,8 +66,9 @@ RUN CHROMEDRIVER_VERSION="133.0.6943.141" \
 # Copy application code
 COPY . .
 
-# Create directories for output
-RUN mkdir -p output
+# Create startup script and make it executable
+COPY startup.sh .
+RUN chmod +x startup.sh
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
@@ -75,11 +76,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV FLASK_APP=app.py
 ENV PATH="/usr/local/bin:${PATH}"
 
-# Create health check endpoint file
-RUN echo 'def create_app():\n    from flask import Flask\n    app = Flask(__name__)\n    @app.route("/")\n    def health():\n        return "OK"\n    return app' > health.py
-
-# Expose port (for documentation only - Cloud Run ignores this)
+# Expose port 8080 (Cloud Run will set PORT env var)
 EXPOSE 8080
 
-# Run with Gunicorn using PORT environment variable
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 app:app
+# Use the startup script
+CMD ["./startup.sh"]
