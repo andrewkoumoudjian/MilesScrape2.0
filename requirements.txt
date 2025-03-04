@@ -9,7 +9,7 @@ webdriver-manager==3.8.6
 
 # Google Cloud dependencies
 google-cloud-storage==2.9.0
-google-cloud-secretmanager==2.16.1
+google-cloud-secretmanager==2.15.0  # Changed from 2.16.1 to 2.15.0
 google-cloud-firestore==2.11.1
 google-cloud-bigquery==3.10.0
 firebase-admin==6.1.0
